@@ -1,10 +1,10 @@
 import os
 import json
 import csv
+import httpx
 from openai import OpenAI
 from dotenv import load_dotenv
 
-# TODO: Create a unit test for this function.
 def check_response(response: str, keyword: str) -> bool:
     """
     Checks if the keyword is present in the AI's response (case-insensitive).
@@ -18,7 +18,6 @@ def check_response(response: str, keyword: str) -> bool:
     """
     return keyword.lower() in response.lower()
 
-# TODO: Create an integration test for this function.
 def get_ai_response(client: OpenAI, prompt: str) -> str:
     """
     Sends a prompt to the OpenAI API and returns the response content.
@@ -39,7 +38,6 @@ def get_ai_response(client: OpenAI, prompt: str) -> str:
     )
     return completion.choices[0].message.content
 
-# TODO: Create a unit test for this function.
 def load_prompts(file_path: str) -> list:
     """
     Loads prompts and target keywords from a CSV file.
@@ -57,7 +55,6 @@ def load_prompts(file_path: str) -> list:
             prompts.append(row)
     return prompts
 
-# TODO: Create a unit test for this function.
 def write_report(file_path: str, results: list):
     """
     Writes a list of test results to a report file in JSON format.
@@ -86,7 +83,15 @@ def run_tests():
 
     try:
         prompts = load_prompts(prompts_file)
-        client = OpenAI(api_key=api_key)
+
+        # Configure an httpx client to handle proxy settings from environment variables
+        http_client = httpx.Client(
+            proxies={
+                "http://": os.getenv("HTTP_PROXY"),
+                "https://": os.getenv("HTTPS_PROXY"),
+            }
+        )
+        client = OpenAI(api_key=api_key, http_client=http_client)
 
         for item in prompts:
             prompt = item['prompt']
