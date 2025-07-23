@@ -78,7 +78,7 @@ class TestMainRunner(unittest.TestCase):
 
     def setUp(self):
         """Set up for tests."""
-        self.report_file = "report.log"
+        self.report_file = "test_report.log"
         if os.path.exists(self.report_file):
             os.remove(self.report_file)
 
@@ -127,7 +127,7 @@ class TestMainRunner(unittest.TestCase):
         mock_openai_instance.chat.completions.create.side_effect = [mock_completion_1, mock_completion_2]
 
         # Act
-        run_tests()
+        run_tests(report_file=self.report_file)
 
         # Assert
         # Verify client initialization
@@ -145,7 +145,9 @@ class TestMainRunner(unittest.TestCase):
 
         # Verify report writing
         mock_write_report.assert_called_once()
-        actual_results = mock_write_report.call_args[0][1]
+        call_args = mock_write_report.call_args[0]
+        self.assertEqual(call_args[0], self.report_file)
+        actual_results = call_args[1]
         expected_results = [
             {
                 'prompt': 'What is the capital of France?',

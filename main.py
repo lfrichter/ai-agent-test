@@ -66,7 +66,7 @@ def write_report(file_path: str, results: list):
     with open(file_path, "w", encoding='utf-8') as f:
         json.dump(results, f, indent=4)
 
-def run_tests():
+def run_tests(prompts_file="prompts.csv", report_file="report.log"):
     """
     Main function to run the AI agent testing process. It loads prompts,
     gets AI responses, checks them, and logs the results.
@@ -76,9 +76,6 @@ def run_tests():
     if not api_key:
         print("Error: OPENAI_API_KEY not found. Please ensure it is set in the .env file.")
         return
-
-    prompts_file = "prompts.csv"
-    report_file = "report.log"
     all_results = []
 
     try:
