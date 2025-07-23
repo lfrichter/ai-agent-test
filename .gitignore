@@ -1,0 +1,9 @@
+# Python
+__pycache__/
+*.pyc
+
+# Log files
+*.log
+
+# Environment variables
+.env
