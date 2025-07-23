@@ -2,21 +2,43 @@ import os
 import json
 import csv
 import httpx
+import nltk
+from nltk.stem import PorterStemmer
+from nltk.tokenize import word_tokenize
 from openai import OpenAI
 from dotenv import load_dotenv
 
+# Initialize the stemmer once for efficiency
+stemmer = PorterStemmer()
+
 def check_response(response: str, keyword: str) -> bool:
     """
-    Checks if the keyword is present in the AI's response (case-insensitive).
+    Checks if the stemmed version of the keyword is present in the tokenized and
+    stemmed response. The check is case-insensitive and uses stemming to match
+    word roots (e.g., 'flying' matches 'fly').
 
     Args:
         response: The text response from the AI agent.
         keyword: The word to search for in the response.
 
     Returns:
-        True if the keyword is found, False otherwise.
+        True if the keyword's stem is found, False otherwise.
     """
-    return keyword.lower() in response.lower()
+    # Ensure NLTK 'punkt' tokenizer is available. This is a one-time check.
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        print("First-time setup: Downloading NLTK 'punkt' model...")
+        nltk.download('punkt', quiet=True)
+        print("'punkt' model downloaded.")
+
+    # Tokenize the response, then stem each token
+    tokens = word_tokenize(response.lower())
+    stemmed_tokens = [stemmer.stem(token) for token in tokens]
+
+    # Stem the keyword and check for its presence in the stemmed tokens
+    stemmed_keyword = stemmer.stem(keyword.lower())
+    return stemmed_keyword in stemmed_tokens
 
 def get_ai_response(client: OpenAI, prompt: str) -> str:
     """

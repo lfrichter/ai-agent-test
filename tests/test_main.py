@@ -1,8 +1,10 @@
 import unittest
 from unittest.mock import patch, MagicMock, mock_open
 import json
+import re
 import os
 import sys
+import nltk
 
 # Add the project root to the Python path to allow importing 'main'
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -13,12 +15,35 @@ from main import check_response, get_ai_response, load_prompts, run_tests, write
 class TestAIHelpers(unittest.TestCase):
     """Unit tests for helper functions in main.py."""
 
-    def test_check_response(self):
-        """Tests the keyword checking logic."""
+    @patch('main.word_tokenize')
+    @patch('nltk.download')
+    @patch('nltk.data.find', side_effect=LookupError)
+    def test_check_response_downloads_punkt_if_missing(self, mock_find, mock_download, mock_word_tokenize):
+        """Tests that check_response triggers NLTK download if model is missing."""
+        # We don't care about the result of the function, just that the download is triggered.
+        # Mocking word_tokenize prevents it from running and re-raising the LookupError.
+        mock_word_tokenize.return_value = []
+        check_response("test response", "test")
+        mock_find.assert_called_once_with('tokenizers/punkt')
+        mock_download.assert_called_once_with('punkt', quiet=True)
+
+    @patch('main.word_tokenize')
+    @patch('nltk.data.find')
+    def test_check_response_with_stemming(self, mock_find, mock_word_tokenize):
+        """Tests the keyword checking logic with stemming and case-insensitivity."""
+        # Mock word_tokenize to return a simple list of tokens.
+        # This isolates our function from NLTK's tokenization implementation details.
+        mock_word_tokenize.side_effect = lambda text: re.findall(r'\w+', text)
+
+        # Basic matching
         self.assertTrue(check_response("The capital is Paris.", "paris"))
         self.assertFalse(check_response("The capital is Paris.", "berlin"))
+        # Case-insensitivity
         self.assertTrue(check_response("A response about SOLAR power.", "solar"))
-        self.assertTrue(check_response("Case-insensitivity test: SuNsEt", "sunset"))
+        # Stemming tests
+        self.assertTrue(check_response("He was flying high in the sky.", "fly"))
+        self.assertTrue(check_response("Imagination is more important than knowledge.", "imagine"))
+        self.assertTrue(check_response("The team was victorious.", "victory"))
 
     @patch("builtins.open", new_callable=mock_open, read_data='prompt,target_word\n"Is it sunny?","sun"\n"Is it rainy?","rain"')
     def test_load_prompts(self, mock_file):
