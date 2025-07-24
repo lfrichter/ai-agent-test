@@ -3,6 +3,7 @@ import json
 import csv
 import httpx
 import nltk
+from urllib.error import URLError
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 from openai import OpenAI
@@ -10,6 +11,10 @@ from dotenv import load_dotenv
 
 # Initialize the stemmer once for efficiency
 stemmer = PorterStemmer()
+
+# --- Constants ---
+PROMPTS_FILE = "prompts.csv"
+REPORT_FILE = "report.log"
 
 def check_response(response: str, keyword: str) -> bool:
     """
@@ -28,9 +33,13 @@ def check_response(response: str, keyword: str) -> bool:
     try:
         nltk.data.find('tokenizers/punkt')
     except LookupError:
-        print("First-time setup: Downloading NLTK 'punkt' model...")
-        nltk.download('punkt', quiet=True)
-        print("'punkt' model downloaded.")
+        try:
+            print("First-time setup: Downloading NLTK 'punkt' model...")
+            nltk.download('punkt', quiet=True)
+            print("'punkt' model downloaded.")
+        except URLError:
+            print("Error: Could not download NLTK 'punkt' model. Please check your internet connection.")
+            return False
 
     # Tokenize the response, then stem each token
     tokens = word_tokenize(response.lower())
@@ -60,7 +69,7 @@ def get_ai_response(client: OpenAI, prompt: str) -> str:
     )
     return completion.choices[0].message.content
 
-def load_prompts(file_path: str) -> list:
+def load_prompts(file_path: str) -> list[dict[str, str]]:
     """
     Loads prompts and target keywords from a CSV file.
 
@@ -88,7 +97,7 @@ def write_report(file_path: str, results: list):
     with open(file_path, "w", encoding='utf-8') as f:
         json.dump(results, f, indent=4)
 
-def run_tests(prompts_file="prompts.csv", report_file="report.log"):
+def run_tests(prompts_file: str, report_file: str):
     """
     Main function to run the AI agent testing process. It loads prompts,
     gets AI responses, checks them, and logs the results.
@@ -103,13 +112,8 @@ def run_tests(prompts_file="prompts.csv", report_file="report.log"):
     try:
         prompts = load_prompts(prompts_file)
 
-        # Configure an httpx client to handle proxy settings from environment variables
-        http_client = httpx.Client(
-            proxies={
-                "http://": os.getenv("HTTP_PROXY"),
-                "https://": os.getenv("HTTPS_PROXY"),
-            }
-        )
+        # httpx automatically uses HTTP_PROXY and HTTPS_PROXY env vars if they are set.
+        http_client = httpx.Client()
         client = OpenAI(api_key=api_key, http_client=http_client)
 
         for item in prompts:
@@ -135,4 +139,4 @@ def run_tests(prompts_file="prompts.csv", report_file="report.log"):
         print(f"An unexpected error occurred: {e}")
 
 if __name__ == "__main__":
-    run_tests()
+    run_tests(prompts_file=PROMPTS_FILE, report_file=REPORT_FILE)
