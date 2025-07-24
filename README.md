@@ -73,8 +73,8 @@ Edit the `prompts.csv` file to add the prompts you want to test. Each line must 
 
 ```csv
 prompt,target_word
-"What is the capital of France?","Paris"
-"Describe the sun.","star"
+"Describe a peaceful morning in the countryside.","sunrise"
+"Imagine a world where everyone can fly. What would change?","wings"
 ```
 
 ### Execution
