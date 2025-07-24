@@ -1,8 +1,8 @@
 # AI Agent Tester
 
-![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
-![OpenAI](https://img.shields.io/badge/OpenAI-API-green.svg)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+
+![Python](https://img.shields.io/badge/python-3.10+-blue.svg)  ![OpenAI](https://img.shields.io/badge/OpenAI-API-green.svg)  ![HTTPX](https://img.shields.io/badge/httpx-0.27.0-blue)   ![NLTK](https://img.shields.io/badge/nltk-3.8.1-blue) ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 
 A simple application for testing an AI Agent by sending multiple prompts and validating the responses based on expected keywords.
 
